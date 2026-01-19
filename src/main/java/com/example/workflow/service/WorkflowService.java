@@ -28,13 +28,13 @@ public class WorkflowService {
 
         processRepo.save(p);
         log.info("Created process: {}", p);
-        engine.manageProcess(new Context().setProcess(p), Signal.START);
+        engine.execute(new Context().setProcess(p), Signal.START);
         return p.getId();
     }
 
     public void resume(UUID processId, Signal signal) {
         var p = processRepo.findById(processId).orElseThrow();
         log.info("[Core]: found process: {}", p);
-        engine.manageProcess(new Context().setProcess(p), signal);
+        engine.execute(new Context().setProcess(p), signal);
     }
 }

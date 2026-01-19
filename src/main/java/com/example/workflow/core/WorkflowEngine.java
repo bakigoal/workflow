@@ -6,8 +6,10 @@ import com.example.workflow.entity.Transfer;
 import com.example.workflow.repository.ProcessInstanceRepository;
 import com.example.workflow.repository.StepInstanceRepository;
 import com.example.workflow.repository.TransferRepository;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +19,6 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class WorkflowEngine {
 
     private final ProcessInstanceRepository processRepo;
@@ -25,10 +26,20 @@ public class WorkflowEngine {
     private final TransferRepository transferRepo;
     private final StepHandlerRegistry registry;
 
-    public void manageProcess(Context context, Signal signal) {
+    @Transactional
+    public void execute(Context context, Signal signal) {
+        try {
+            log.info("[Core]: Start managing process: {}", context.getProcess().getId());
+            manageProcess(context, signal);
+        } catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
+            log.warn("[Core]: Concurrent processing ignored for process {}", context.getProcess().getId());
+        } finally {
+            log.info("[Core]: Finish managing process: {}", context.getProcess().getId());
+        }
+    }
 
+    private void manageProcess(Context context, Signal signal) {
         var p = context.getProcess();
-        log.info("[Core]: Start managing process: {}", p.getId());
 
         var currentStepOpt = stepRepo.findFirstByProcessInstance_IdAndEndTimeIsNull(p.getId());
         StepInstance currentStep;
@@ -58,7 +69,7 @@ public class WorkflowEngine {
 
             if (nextSignal == null) {
                 log.info("[Core]: Step {} paused", currentStep.getStepTypeCode());
-                break;
+                return;
             }
 
             // close step
@@ -71,13 +82,11 @@ public class WorkflowEngine {
 
             if (t.getStepTypeCodeTarget() == null) {
                 finishProcess(p);
-                break;
+                return;
             }
 
             currentStep = createStep(p, t);
         }
-
-        log.info("[Core]: End managing process: {}", p.getId());
     }
 
     private void finishProcess(ProcessInstance p) {

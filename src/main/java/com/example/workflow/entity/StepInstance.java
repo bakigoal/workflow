@@ -1,9 +1,6 @@
 package com.example.workflow.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -19,6 +16,9 @@ public class StepInstance {
 
     @Id
     private UUID id;
+
+    @Version
+    private long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude

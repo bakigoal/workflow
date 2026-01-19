@@ -14,4 +14,8 @@
         <sqlFile path="db/changelog/002-add-simple-transfers.sql"/>
     </changeSet>
 
+    <changeSet id="003-add-step-instance-version" author="system">
+        <sqlFile path="db/changelog/003-add-step-instance-version.sql"/>
+    </changeSet>
+
 </databaseChangeLog>
