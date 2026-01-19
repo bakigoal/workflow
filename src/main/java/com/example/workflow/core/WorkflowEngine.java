@@ -31,10 +31,9 @@ public class WorkflowEngine {
         try {
             log.info("[Core]: Start managing process: {}", context.getProcess().getId());
             manageProcess(context, signal);
+            log.info("[Core]: Finish managing process: {}", context.getProcess().getId());
         } catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
             log.warn("[Core]: Concurrent processing ignored for process {}", context.getProcess().getId());
-        } finally {
-            log.info("[Core]: Finish managing process: {}", context.getProcess().getId());
         }
     }
 
