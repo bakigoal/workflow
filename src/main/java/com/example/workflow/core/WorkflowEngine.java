@@ -34,7 +34,7 @@ public class WorkflowEngine {
         StepInstance currentStep;
         // ===== START =====
         if (currentStepOpt.isEmpty()) {
-            var t = transferRepo.fromStart(p.getProcessTypeCode(), signal.name()).orElseThrow();
+            var t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name()).orElseThrow();
             context.setTransfer(t);
 
             if (t.getStepTypeCodeTarget() == null) {
@@ -65,7 +65,7 @@ public class WorkflowEngine {
             currentStep.setEndTime(OffsetDateTime.now());
             stepRepo.saveAndFlush(currentStep);
 
-            var t = transferRepo.fromStep(p.getProcessTypeCode(), currentStep.getStepTypeCode(), nextSignal.name()).orElseThrow();
+            var t = transferRepo.findStepTransition(p.getProcessTypeCode(), currentStep.getStepTypeCode(), nextSignal.name()).orElseThrow();
 
             context.setTransfer(t);
 

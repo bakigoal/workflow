@@ -14,7 +14,7 @@ public interface TransferRepository extends JpaRepository<Transfer, String> {
                   and t.signalCode = :signal
                   and t.stepTypeCodeSource is null
             """)
-    Optional<Transfer> fromStart(String processTypeCode, String signal);
+    Optional<Transfer> findStartTransition(String processTypeCode, String signal);
 
     @Query("""
                 select t from Transfer t
@@ -22,5 +22,5 @@ public interface TransferRepository extends JpaRepository<Transfer, String> {
                   and t.signalCode = :signal
                   and t.stepTypeCodeSource = :step
             """)
-    Optional<Transfer> fromStep(String processTypeCode, String step, String signal);
+    Optional<Transfer> findStepTransition(String processTypeCode, String step, String signal);
 }
