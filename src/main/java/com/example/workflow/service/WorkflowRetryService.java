@@ -33,6 +33,8 @@ public class WorkflowRetryService {
                         Signal.RETRY
                 );
             }
+
+            stepRepo.saveAll(batch.stream().peek(it -> it.setRetryClaimedAt(null)).toList());
         }
     }
 

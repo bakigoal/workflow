@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,15 +49,21 @@ public class WorkflowEngine {
             StepInstance currentStep;
             Transfer t;
             if (activeStepOpt.isPresent()) {
-                // close oldStep
-                var oldStep = activeStepOpt.get();
-                closeStep(oldStep);
-                t = transferRepo.findStepTransition(p.getProcessTypeCode(), oldStep.getStepTypeCode(), signal.name()).orElseThrow();
-                int retryCount = signal == Signal.RETRY ? oldStep.getRetryCount() : 0;
-                currentStep = createStep(p, t, retryCount);
+                var activeStep = activeStepOpt.get();
+                switch (signal) {
+                    case RETRY -> { // retry active step
+                        currentStep = activeStep;
+                        t = transferRepo.findStepTransition(p.getProcessTypeCode(), currentStep.getStepTypeCode(), signal.name()).orElseThrow();
+                    }
+                    case null, default -> { // close active step and create new one
+                        closeStep(activeStep);
+                        t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name()).orElseThrow();
+                        currentStep = createStep(p, t);
+                    }
+                }
             } else {
                 t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name()).orElseThrow();
-                currentStep = createStep(p, t, 0);
+                currentStep = createStep(p, t);
             }
             context.setCurrentStep(currentStep);
             context.setTransfer(t);
@@ -105,7 +110,7 @@ public class WorkflowEngine {
             currentStep.setRetryCount(currentStep.getRetryCount() + 1);
             currentStep.setNextRetryAt(OffsetDateTime.now().plusSeconds(engineProps.getRetry().getRetryAfterSeconds()));
 
-            stepRepo.saveAndFlush(currentStep);
+            stepRepo.save(currentStep);
             return true;
         }
 
@@ -118,14 +123,13 @@ public class WorkflowEngine {
         processRepo.save(p);
     }
 
-    private StepInstance createStep(ProcessInstance p, Transfer t, int retryCount) {
+    private StepInstance createStep(ProcessInstance p, Transfer t) {
         var next = new StepInstance();
         next.setId(UUID.randomUUID());
         next.setProcessInstance(p);
         next.setStepTypeCode(t.getStepTypeCodeTarget());
         next.setTransferCode(t.getCode());
         next.setStartTime(OffsetDateTime.now());
-        next.setRetryCount(retryCount);
 
         stepRepo.save(next);
         return next;
