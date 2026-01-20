@@ -8,13 +8,11 @@ import com.example.workflow.entity.ProcessResult;
 import com.example.workflow.entity.StepInstance;
 import com.example.workflow.repository.ProcessInstanceRepository;
 import com.example.workflow.repository.StepInstanceRepository;
-import com.example.workflow.repository.TransferRepository;
 import com.example.workflow.steps.TestStepsConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.jdbc.Sql;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -27,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Import(TestStepsConfig.class)
-class WorkflowEngineIT {
+class WorkflowEngineIT extends AbstractIntegrationTest {
 
     @Autowired
     WorkflowEngine workflowEngine;
@@ -36,11 +34,8 @@ class WorkflowEngineIT {
     ProcessInstanceRepository processRepo;
     @Autowired
     StepInstanceRepository stepRepo;
-    @Autowired
-    TransferRepository transferRepository;
 
     @Test
-    @Sql(scripts = "/data/001-test-add-simple-transfers.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     void shouldStartAndFinishProcess() {
         // given
         var process = new ProcessInstance();

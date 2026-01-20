@@ -1,5 +1,3 @@
-delete from transfer;
-
 -- START -> S_A
 insert into transfer (
     code,

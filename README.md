@@ -49,6 +49,18 @@
 - целевой шаг
 - Позволяет менять логику процесса без деплоя
 
+Генерируется диаграмма переходов по GET /diagram/{processTypeCode} 
+
+```mermaid
+stateDiagram-v2
+    [*] --> STEP_A : START
+    STEP_A --> STEP_B : NEXT
+    STEP_B --> [*] : FINISH
+    STEP_B --> STEP_ERROR : ERROR
+    STEP_ERROR --> [*] : FINISH
+    STEP_B --> STEP_B : RETRY
+```
+
 ---
 
 ### Signal
