@@ -49,7 +49,10 @@
 - целевой шаг
 - Позволяет менять логику процесса без деплоя
 
-Генерируется диаграмма переходов по GET /diagram/{processTypeCode} 
+#### Transfer Diagrams
+
+- Workflow диаграммы генерируются автоматически из БД по `GET /diagram/{processTypeCode}`
+- Диаграмма всегда соответствует реальному workflow и не может устареть
 
 ```mermaid
 stateDiagram-v2
