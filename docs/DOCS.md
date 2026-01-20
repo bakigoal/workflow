@@ -20,13 +20,13 @@ classDiagram
     WorkflowEngine --> Transfer
 ```
 
-WorkflowEngine — это orchestration-слой.
-Он не знает деталей шагов, только управляет состоянием и переходами.
-Логика шагов инкапсулирована в StepHandler’ах.
+- WorkflowEngine — это orchestration-слой.
+- Он не знает деталей шагов, только управляет состоянием и переходами.
+- Логика шагов инкапсулирована в StepHandler’ах.
 
 ---
 
-2️⃣ FSM / Execution Flow (ключевая диаграмма)
+2️⃣ FSM / Execution Flow
 
 ```mermaid
 stateDiagram-v2
@@ -37,19 +37,18 @@ stateDiagram-v2
     STEP_B --> STEP_ERROR: ERROR
     STEP_B --> END: SUCCESS
 
-    STEP_A --> STEP_A: retry / backoff
     STEP_B --> STEP_B: retry / backoff
 
     STEP_ERROR --> END
     END --> [*]
 ```
 
-Это конечный автомат.
-Переходы определяются сигналами, а retry — это просто возврат в тот же шаг с задержкой.
+- Это конечный автомат.
+- Переходы определяются сигналами, а retry — это просто возврат в тот же шаг с задержкой.
 
 ---
 
-3️⃣ Sequence diagram — pause / resume (очень сильная)
+3️⃣ Sequence diagram — pause / resume
 
 ```mermaid
 sequenceDiagram
@@ -81,8 +80,8 @@ sequenceDiagram
     WorkflowEngine->>DB: persist step + transition
 ```
 
-Pause — это осознанное завершение транзакции без продолжения процесса.
-Resume — повторный запуск engine с новым сигналом.
+- Pause — это осознанное завершение транзакции без продолжения процесса.
+- Resume — повторный запуск engine с новым сигналом.
 
 ---
 
@@ -104,8 +103,8 @@ sequenceDiagram
     Engine_B-->>Engine_B: exit gracefully
 ```
 
-Конкуренция разрешается optimistic locking’ом.
-Один из потоков безопасно проигрывает — процесс остаётся консистентным.
+- Конкуренция разрешается optimistic locking’ом.
+- Один из потоков безопасно проигрывает — процесс остаётся консистентным.
 
 ---
 
@@ -124,5 +123,5 @@ sequenceDiagram
     WorkflowEngine->>DB: set nextRetryAt
 ```
 
-Retry управляется данными, а не кодом.
-Engine просто исполняет то, что готово к выполнению.
+- Retry управляется данными, а не кодом.
+- Engine просто исполняет то, что готово к выполнению.
