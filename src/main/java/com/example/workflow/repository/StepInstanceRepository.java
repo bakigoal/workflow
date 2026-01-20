@@ -35,7 +35,7 @@ public interface StepInstanceRepository extends JpaRepository<StepInstance, UUID
     @Query(value = """
             update step_instance
             set retry_claimed_at = null
-            where retry_claimed_at < now() - interval '10 minutes';
+            where retry_claimed_at < now() - make_interval(mins => :claimTtlMinutes);
             """, nativeQuery = true)
-    void clearOldClaims();
+    void clearOldClaims(int claimTtlMinutes);
 }

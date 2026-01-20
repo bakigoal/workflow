@@ -2,8 +2,8 @@ package com.example.workflow.core;
 
 public enum Signal {
     START,
-    NEXT,
-    FINISH,
+    RETRY,
     ERROR,
-    RETRY
+    NEXT,
+    FINISH
 }

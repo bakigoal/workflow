@@ -1,5 +1,6 @@
 package com.example.workflow.core;
 
+import com.example.workflow.config.WorkflowEngineProperties;
 import com.example.workflow.entity.ProcessInstance;
 import com.example.workflow.entity.StepInstance;
 import com.example.workflow.entity.Transfer;
@@ -25,9 +26,7 @@ public class WorkflowEngine {
     private final StepInstanceRepository stepRepo;
     private final TransferRepository transferRepo;
     private final StepHandlerRegistry registry;
-
-    private static final int MAX_RETRY_COUNT = 3;
-    private static final int RETRY_AFTER_SECONDS = 20;
+    private final WorkflowEngineProperties engineProps;
 
     @Transactional
     public void execute(Context context, Signal signal) {
@@ -80,12 +79,8 @@ public class WorkflowEngine {
 
             // retry
             if (nextSignal == Signal.RETRY) {
-                if (currentStep.getRetryCount() < MAX_RETRY_COUNT) {
-                    currentStep.setRetryCount(currentStep.getRetryCount() + 1);
-                    currentStep.setNextRetryAt(OffsetDateTime.now().plusSeconds(RETRY_AFTER_SECONDS));
-
-                    stepRepo.saveAndFlush(currentStep);
-                    log.info("[Core]: Step {} paused for retry", currentStep.getStepTypeCode());
+                if (scheduleRetry(currentStep)) {
+                    log.info("[Core]: Step {} scheduled for retry", currentStep.getStepTypeCode());
                     return; // PAUSE
                 }
 
@@ -95,6 +90,18 @@ public class WorkflowEngine {
 
             signal = nextSignal;
         }
+    }
+
+    private boolean scheduleRetry(StepInstance currentStep) {
+        if (currentStep.getRetryCount() < engineProps.getRetry().getMaxRetryCount()) {
+            currentStep.setRetryCount(currentStep.getRetryCount() + 1);
+            currentStep.setNextRetryAt(OffsetDateTime.now().plusSeconds(engineProps.getRetry().getRetryAfterSeconds()));
+
+            stepRepo.saveAndFlush(currentStep);
+            return true;
+        }
+
+        return false;
     }
 
     private void finishProcess(ProcessInstance p) {
