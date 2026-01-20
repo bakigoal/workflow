@@ -2,6 +2,7 @@ package com.example.workflow.core;
 
 import com.example.workflow.config.WorkflowEngineProperties;
 import com.example.workflow.entity.ProcessInstance;
+import com.example.workflow.entity.ProcessResult;
 import com.example.workflow.entity.StepInstance;
 import com.example.workflow.entity.Transfer;
 import com.example.workflow.repository.ProcessInstanceRepository;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -49,8 +52,7 @@ public class WorkflowEngine {
             if (activeStepOpt.isPresent()) {
                 // close oldStep
                 var oldStep = activeStepOpt.get();
-                oldStep.setEndTime(OffsetDateTime.now());
-                stepRepo.saveAndFlush(oldStep);
+                closeStep(oldStep);
                 t = transferRepo.findStepTransition(p.getProcessTypeCode(), oldStep.getStepTypeCode(), signal.name()).orElseThrow();
                 int retryCount = signal == Signal.RETRY ? oldStep.getRetryCount() : 0;
                 currentStep = createStep(p, t, retryCount);
@@ -62,7 +64,8 @@ public class WorkflowEngine {
             context.setTransfer(t);
 
             if (t.getStepTypeCodeTarget() == null) {
-                finishProcess(p);
+                closeStep(currentStep);
+                finishProcess(p, context);
                 return;
             }
 
@@ -92,6 +95,11 @@ public class WorkflowEngine {
         }
     }
 
+    private void closeStep(StepInstance oldStep) {
+        oldStep.setEndTime(OffsetDateTime.now());
+        stepRepo.saveAndFlush(oldStep);
+    }
+
     private boolean scheduleRetry(StepInstance currentStep) {
         if (currentStep.getRetryCount() < engineProps.getRetry().getMaxRetryCount()) {
             currentStep.setRetryCount(currentStep.getRetryCount() + 1);
@@ -104,8 +112,9 @@ public class WorkflowEngine {
         return false;
     }
 
-    private void finishProcess(ProcessInstance p) {
+    private void finishProcess(ProcessInstance p, Context context) {
         p.setEndTime(OffsetDateTime.now());
+        p.setResult(Optional.ofNullable(context.getResult()).orElse(ProcessResult.SUCCESS));
         processRepo.save(p);
     }
 
