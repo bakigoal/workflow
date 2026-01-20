@@ -1,29 +1,23 @@
 1️⃣ Общая архитектура Workflow Engine
 
-```plantuml
-package "Workflow Engine" {
+```mermaid
+classDiagram
+    class WorkflowEngine
+    class StepHandlerRegistry
+    class StepHandler {
+        <<interface>>
+    }
 
-class WorkflowEngine
-class StepHandlerRegistry
-interface StepHandler
+    class ProcessInstance
+    class StepInstance
+    class Transfer
 
-class ProcessInstance
-class StepInstance
-class Transfer
+    WorkflowEngine --> StepHandlerRegistry
+    StepHandlerRegistry --> StepHandler
 
-WorkflowEngine --> StepHandlerRegistry
-StepHandlerRegistry --> StepHandler
-
-WorkflowEngine --> ProcessInstance
-WorkflowEngine --> StepInstance
-WorkflowEngine --> Transfer
-}
-
-package "Persistence (DB)" {
-ProcessInstance
-StepInstance
-Transfer
-}
+    WorkflowEngine --> ProcessInstance
+    WorkflowEngine --> StepInstance
+    WorkflowEngine --> Transfer
 ```
 
 WorkflowEngine — это orchestration-слой.
