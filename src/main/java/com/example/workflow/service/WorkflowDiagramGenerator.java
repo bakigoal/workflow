@@ -48,7 +48,7 @@ public class WorkflowDiagramGenerator {
             }
         }
 
-        return sb.toString();
+        return sb.toString().trim();
     }
 
     private String normalize(String step) {
