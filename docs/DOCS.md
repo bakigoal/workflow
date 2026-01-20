@@ -28,22 +28,20 @@ WorkflowEngine — это orchestration-слой.
 
 2️⃣ FSM / Execution Flow (ключевая диаграмма)
 
-```plantuml
-@startuml
-[*] --> START
+```mermaid
+stateDiagram-v2
+    [*] --> START
 
-START --> STEP_A : Signal.START
-STEP_A --> STEP_B : Signal.OK
-STEP_B --> STEP_ERROR : Signal.ERROR
-STEP_B --> END : Signal.SUCCESS
+    START --> STEP_A: START
+    STEP_A --> STEP_B: OK
+    STEP_B --> STEP_ERROR: ERROR
+    STEP_B --> END: SUCCESS
 
-STEP_A --> STEP_A : retry / backoff
-STEP_B --> STEP_B : retry / backoff
+    STEP_A --> STEP_A: retry / backoff
+    STEP_B --> STEP_B: retry / backoff
 
-STEP_ERROR --> END
-
-END --> [*]
-@enduml
+    STEP_ERROR --> END
+    END --> [*]
 ```
 
 Это конечный автомат.
@@ -53,35 +51,34 @@ END --> [*]
 
 3️⃣ Sequence diagram — pause / resume (очень сильная)
 
-```plantuml
-@startuml
-actor Client
-participant Controller
-participant WorkflowEngine
-participant StepHandler
-database DB
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller
+    participant WorkflowEngine
+    participant StepHandler
+    participant DB
 
-Client -> Controller : POST /process/start
-Controller -> WorkflowEngine : execute(process, START)
+    Client->>Controller: POST /process/start
+    Controller->>WorkflowEngine: execute(process, START)
 
-WorkflowEngine -> DB : find active step
-WorkflowEngine -> StepHandler : handle(step)
+    WorkflowEngine->>DB: find active step
+    WorkflowEngine->>StepHandler: handle(step)
 
-StepHandler --> WorkflowEngine : null (pause)
+    StepHandler-->>WorkflowEngine: null (pause)
 
-WorkflowEngine -> DB : commit state
-Controller --> Client : 202 Accepted + processId
+    WorkflowEngine->>DB: commit state
+    Controller-->>Client: 202 Accepted + processId
 
-== Resume ==
+    Note over Client,Controller: Resume later
 
-Client -> Controller : POST /process/{id}/resume
-Controller -> WorkflowEngine : execute(process, SIGNAL)
+    Client->>Controller: POST /process/{id}/resume
+    Controller->>WorkflowEngine: execute(process, SIGNAL)
 
-WorkflowEngine -> StepHandler : handle(step)
-StepHandler --> WorkflowEngine : NEXT_SIGNAL
+    WorkflowEngine->>StepHandler: handle(step)
+    StepHandler-->>WorkflowEngine: NEXT_SIGNAL
 
-WorkflowEngine -> DB : persist step + transition
-@enduml
+    WorkflowEngine->>DB: persist step + transition
 ```
 
 Pause — это осознанное завершение транзакции без продолжения процесса.
@@ -91,21 +88,20 @@ Resume — повторный запуск engine с новым сигналом
 
 4️⃣ Optimistic Locking (конкурентный запуск)
 
-```plantuml
-@startuml
-participant Engine_A
-participant Engine_B
-database DB
+```mermaid
+sequenceDiagram
+    participant Engine_A
+    participant Engine_B
+    participant DB
 
-Engine_A -> DB : load ProcessInstance (v=1)
-Engine_B -> DB : load ProcessInstance (v=1)
+    Engine_A->>DB: load Process (v=1)
+    Engine_B->>DB: load Process (v=1)
 
-Engine_A -> DB : update (v=2)
-Engine_B -> DB : update (v=2)
+    Engine_A->>DB: update Process (v=2)
+    Engine_B->>DB: update Process (v=2)
 
-DB --> Engine_B : OptimisticLockException
-Engine_B -> Engine_B : exit gracefully
-@enduml
+    DB-->>Engine_B: OptimisticLockException
+    Engine_B-->>Engine_B: exit gracefully
 ```
 
 Конкуренция разрешается optimistic locking’ом.
@@ -115,18 +111,17 @@ Engine_B -> Engine_B : exit gracefully
 
 5️⃣ Retry + Backoff (scheduler)
 
-```plantuml
-@startuml
-participant Scheduler
-participant WorkflowEngine
-database DB
+```mermaid
+sequenceDiagram
+    participant Scheduler
+    participant WorkflowEngine
+    participant DB
 
-Scheduler -> DB : find steps where next_retry_at <= now
-Scheduler -> WorkflowEngine : execute(process, RETRY_SIGNAL)
+    Scheduler->>DB: find steps where nextRetryAt <= now
+    Scheduler->>WorkflowEngine: execute(process, RETRY)
 
-WorkflowEngine -> DB : update retry_count
-WorkflowEngine -> DB : set next_retry_at
-@enduml
+    WorkflowEngine->>DB: update retryCount
+    WorkflowEngine->>DB: set nextRetryAt
 ```
 
 Retry управляется данными, а не кодом.
