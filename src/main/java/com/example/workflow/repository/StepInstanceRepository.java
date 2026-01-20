@@ -11,6 +11,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface StepInstanceRepository extends JpaRepository<StepInstance, UUID> {
+
+    List<StepInstance> findAllByProcessInstance_Id(UUID id);
+
     Optional<StepInstance> findFirstByProcessInstance_IdAndEndTimeIsNull(UUID id);
 
     @Modifying

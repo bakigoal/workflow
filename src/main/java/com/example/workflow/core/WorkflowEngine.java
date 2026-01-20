@@ -50,14 +50,12 @@ public class WorkflowEngine {
             StepInstance currentStep;
             if (activeStepOpt.isEmpty()) {
                 t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name()).orElseThrow();
-                currentStep = createStep(p, t);
+                currentStep = createStep(p, t, 0);
             } else {
                 var activeStep = activeStepOpt.get();
                 t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name()).orElseThrow();
-                if (signal != Signal.RETRY) {
-                    closeStep(activeStep);
-                    activeStep = createStep(p, t);
-                }
+                closeStep(activeStep);
+                activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
             }
             context.setCurrentStep(currentStep);
@@ -118,13 +116,14 @@ public class WorkflowEngine {
         processRepo.save(p);
     }
 
-    private StepInstance createStep(ProcessInstance p, Transfer t) {
+    private StepInstance createStep(ProcessInstance p, Transfer t, int retryCount) {
         var next = new StepInstance();
         next.setId(UUID.randomUUID());
         next.setProcessInstance(p);
         next.setStepTypeCode(t.getStepTypeCodeTarget());
         next.setTransferCode(t.getCode());
         next.setStartTime(OffsetDateTime.now());
+        next.setRetryCount(retryCount);
 
         stepRepo.save(next);
         return next;
