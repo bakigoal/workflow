@@ -4,5 +4,6 @@ public enum Signal {
     START,
     NEXT,
     FINISH,
-    ERROR
+    ERROR,
+    RETRY
 }

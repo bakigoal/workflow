@@ -17,6 +17,10 @@ public class StepBHandler implements StepHandler {
     @Override
     public Signal handle(Context context) {
         log.info("[STEP_B] Handling: {}", context);
+        if (context.getCurrentStep().getRetryCount() < 2) {
+            return Signal.RETRY;
+        }
+
         return random.nextBoolean() ? Signal.FINISH : Signal.ERROR;
     }
 }

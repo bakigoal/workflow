@@ -18,4 +18,8 @@
         <sqlFile path="db/changelog/003-add-step-instance-version.sql"/>
     </changeSet>
 
+    <changeSet id="004-add-retries" author="system">
+        <sqlFile path="db/changelog/004-add-retries.sql"/>
+    </changeSet>
+
 </databaseChangeLog>

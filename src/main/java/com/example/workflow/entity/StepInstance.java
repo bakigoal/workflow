@@ -29,4 +29,8 @@ public class StepInstance {
 
     private OffsetDateTime startTime;
     private OffsetDateTime endTime;
+
+    private int retryCount;
+    private OffsetDateTime nextRetryAt;
+    private OffsetDateTime retryClaimedAt;
 }
