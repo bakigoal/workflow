@@ -46,24 +46,19 @@ public class WorkflowEngine {
 
         while (true) {
             var activeStepOpt = stepRepo.findFirstByProcessInstance_IdAndEndTimeIsNull(p.getId());
-            StepInstance currentStep;
             Transfer t;
-            if (activeStepOpt.isPresent()) {
-                var activeStep = activeStepOpt.get();
-                switch (signal) {
-                    case RETRY -> { // retry active step
-                        currentStep = activeStep;
-                        t = transferRepo.findStepTransition(p.getProcessTypeCode(), currentStep.getStepTypeCode(), signal.name()).orElseThrow();
-                    }
-                    case null, default -> { // close active step and create new one
-                        closeStep(activeStep);
-                        t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name()).orElseThrow();
-                        currentStep = createStep(p, t);
-                    }
-                }
-            } else {
+            StepInstance currentStep;
+            if (activeStepOpt.isEmpty()) {
                 t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name()).orElseThrow();
                 currentStep = createStep(p, t);
+            } else {
+                var activeStep = activeStepOpt.get();
+                t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name()).orElseThrow();
+                if (signal != Signal.RETRY) {
+                    closeStep(activeStep);
+                    activeStep = createStep(p, t);
+                }
+                currentStep = activeStep;
             }
             context.setCurrentStep(currentStep);
             context.setTransfer(t);
