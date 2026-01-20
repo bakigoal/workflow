@@ -1,7 +1,6 @@
 1️⃣ Общая архитектура Workflow Engine
 
 ```plantuml
-@startuml
 package "Workflow Engine" {
 
 class WorkflowEngine
@@ -25,8 +24,6 @@ ProcessInstance
 StepInstance
 Transfer
 }
-
-@enduml
 ```
 
 WorkflowEngine — это orchestration-слой.
