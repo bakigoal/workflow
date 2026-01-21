@@ -1,5 +1,5 @@
 
-package com.example.workflow;
+package com.example.workflow.integration;
 
 import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
