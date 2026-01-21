@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -29,7 +30,7 @@ public class WorkflowEngine {
     private final ProcessInstanceRepository processRepo;
     private final StepInstanceRepository stepRepo;
     private final TransferRepository transferRepo;
-    private final StepHandlerRegistry registry;
+    private final Function<String, StepHandler> stepHandlerProvider;
     private final WorkflowEngineProperties engineProps;
 
     @Transactional
@@ -71,7 +72,7 @@ public class WorkflowEngine {
                 return;
             }
 
-            var stepHandler = registry.get(currentStep.getStepTypeCode());
+            var stepHandler = stepHandlerProvider.apply(currentStep.getStepTypeCode());
             log.debug("[Core]: StepHandler [{}] is started", currentStep.getStepTypeCode());
             var result = stepHandler.handle(context);
             log.debug("[Core]: StepHandler [{}] is finished", currentStep.getStepTypeCode());
