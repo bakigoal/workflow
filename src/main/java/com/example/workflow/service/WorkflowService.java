@@ -1,6 +1,5 @@
 package com.example.workflow.service;
 
-import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.WorkflowEngine;
 import com.example.workflow.entity.ProcessInstance;
@@ -8,12 +7,14 @@ import com.example.workflow.repository.ProcessInstanceRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class WorkflowService {
 
@@ -28,13 +29,13 @@ public class WorkflowService {
 
         processRepo.save(p);
         log.info("Created process: {}", p);
-        engine.execute(new Context().setProcess(p), Signal.START);
+        engine.execute(p.getId(), Signal.START);
         return p.getId();
     }
 
     public void resume(UUID processId, Signal signal) {
         var p = processRepo.findById(processId).orElseThrow();
         log.info("[Core]: found process: {}", p);
-        engine.execute(new Context().setProcess(p), signal);
+        engine.execute(p.getId(), signal);
     }
 }

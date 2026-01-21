@@ -1,19 +1,17 @@
 package com.example.workflow.core;
 
-import com.example.workflow.entity.ProcessInstance;
-import com.example.workflow.entity.ProcessResult;
-import com.example.workflow.entity.StepInstance;
-import com.example.workflow.entity.Transfer;
+import com.example.workflow.core.models.ProcessResult;
+import com.example.workflow.core.models.ProcessState;
+import com.example.workflow.core.models.StepState;
+import com.example.workflow.core.models.TransferState;
 import lombok.Data;
-import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Data
-@ToString
 @Accessors(chain = true)
 public class Context {
-    private ProcessInstance process;
-    private Transfer transfer;
-    private StepInstance currentStep;
+    private ProcessState process;
+    private TransferState transfer;
+    private StepState currentStep;
     private ProcessResult result;
 }

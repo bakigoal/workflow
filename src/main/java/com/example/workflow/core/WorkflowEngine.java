@@ -1,64 +1,55 @@
 package com.example.workflow.core;
 
-import com.example.workflow.config.WorkflowEngineProperties;
-import com.example.workflow.entity.ProcessInstance;
-import com.example.workflow.entity.ProcessResult;
-import com.example.workflow.entity.StepInstance;
-import com.example.workflow.entity.Transfer;
-import com.example.workflow.exceptions.ApiError;
-import com.example.workflow.exceptions.GeneralExceptionContainer;
-import com.example.workflow.repository.ProcessInstanceRepository;
-import com.example.workflow.repository.StepInstanceRepository;
-import com.example.workflow.repository.TransferRepository;
-import jakarta.persistence.OptimisticLockException;
+import com.example.workflow.core.models.ProcessResult;
+import com.example.workflow.core.models.ProcessState;
+import com.example.workflow.core.models.StepState;
+import com.example.workflow.core.models.TransferState;
+import com.example.workflow.core.ports.ProcessStateRepository;
+import com.example.workflow.core.ports.StepStateRepository;
+import com.example.workflow.core.ports.TransferStateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class WorkflowEngine {
 
-    private final ProcessInstanceRepository processRepo;
-    private final StepInstanceRepository stepRepo;
-    private final TransferRepository transferRepo;
+    private final ProcessStateRepository processRepo;
+    private final StepStateRepository stepRepo;
+    private final TransferStateRepository transferRepo;
     private final Function<String, StepHandler> stepHandlerProvider;
-    private final WorkflowEngineProperties engineProps;
 
-    @Transactional
-    public void execute(Context context, Signal signal) {
+    public void execute(UUID processId, Signal signal) {
         try {
-            log.info("[Core]: Start managing process: {}", context.getProcess().getId());
-            manageProcess(context, signal);
-            log.info("[Core]: Finish managing process: {}", context.getProcess().getId());
-        } catch (OptimisticLockException | ObjectOptimisticLockingFailureException e) {
-            log.warn("[Core]: Concurrent processing ignored for process {}", context.getProcess().getId());
+            log.info("[Core]: Start managing process: {}", processId);
+            var process = processRepo.findById(processId).orElseThrow();
+            manageProcess(process, signal);
+            log.info("[Core]: Finish managing process: {}", processId);
+        } catch (Exception e) {
+            log.error("[Core]: Error managing process {}: {}", processId, e.getMessage(), e);
+            throw e;
         }
     }
 
-    private void manageProcess(Context context, Signal signal) {
-        var p = context.getProcess();
+
+    private void manageProcess(ProcessState p, Signal signal) {
+        var context = new Context().setProcess(p);
 
         while (true) {
-            var activeStepOpt = stepRepo.findFirstByProcessInstance_IdAndEndTimeIsNull(p.getId());
-            Transfer t;
-            StepInstance currentStep;
+            var activeStepOpt = stepRepo.findActiveStep(p.getId());
+            TransferState t;
+            StepState currentStep;
             if (activeStepOpt.isEmpty()) {
-                t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name())
-                        .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
+                t = transferRepo.findStart(p.getProcessTypeCode(), signal)
+                        .orElseThrow();
                 currentStep = createStep(p, t, 0);
             } else {
                 var activeStep = activeStepOpt.get();
-                t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name())
-                        .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
+                t = transferRepo.findNext(p.getProcessTypeCode(), signal, activeStep).orElseThrow();
                 closeStep(activeStep);
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
@@ -66,7 +57,7 @@ public class WorkflowEngine {
             context.setCurrentStep(currentStep);
             context.setTransfer(t);
 
-            if (t.getStepTypeCodeTarget() == null) {
+            if (t.getTargetStepTypeCode() == null) {
                 closeStep(currentStep);
                 finishProcess(p, context);
                 return;
@@ -88,7 +79,7 @@ public class WorkflowEngine {
 
             // retry
             if (nextSignal == Signal.RETRY) {
-                if (scheduleRetry(currentStep)) {
+                if (stepRepo.scheduleForRetry(currentStep)) {
                     log.info("[Core]: Step [{}] scheduled for retry", currentStep.getStepTypeCode());
                     return; // PAUSE
                 }
@@ -101,42 +92,27 @@ public class WorkflowEngine {
         }
     }
 
-    private void closeStep(StepInstance oldStep) {
-        oldStep.setEndTime(OffsetDateTime.now());
-        stepRepo.saveAndFlush(oldStep);
+    private StepState createStep(ProcessState p, TransferState t, int retryCount) {
+        var next = new StepState();
+        next.setId(UUID.randomUUID());
+        next.setProcessId(p.getId());
+        next.setStepTypeCode(t.getTargetStepTypeCode());
+        next.setTransferCode(t.getCode());
+        next.setRetryCount(retryCount);
+
+        stepRepo.create(next);
+        log.debug("[Core]: Step [{}][{}] is created", next.getStepTypeCode(), next.getId());
+        return next;
+    }
+
+    private void closeStep(StepState oldStep) {
+        stepRepo.closeStep(oldStep);
         log.debug("[Core]: Step [{}][{}] is closed", oldStep.getStepTypeCode(), oldStep.getId());
     }
 
-    private boolean scheduleRetry(StepInstance currentStep) {
-        if (currentStep.getRetryCount() < engineProps.getRetry().getMaxRetryCount()) {
-            currentStep.setRetryCount(currentStep.getRetryCount() + 1);
-            currentStep.setNextRetryAt(OffsetDateTime.now().plusSeconds(engineProps.getRetry().getRetryAfterSeconds()));
-
-            stepRepo.save(currentStep);
-            return true;
-        }
-
-        return false;
-    }
-
-    private void finishProcess(ProcessInstance p, Context context) {
-        p.setEndTime(OffsetDateTime.now());
-        p.setResult(Optional.ofNullable(context.getResult()).orElse(ProcessResult.SUCCESS));
-        processRepo.save(p);
-        log.info("[Core]: Process [{}][{}] is closed with result [{}]", p.getProcessTypeCode(), p.getId(), p.getResult().name());
-    }
-
-    private StepInstance createStep(ProcessInstance p, Transfer t, int retryCount) {
-        var next = new StepInstance();
-        next.setId(UUID.randomUUID());
-        next.setProcessInstance(p);
-        next.setStepTypeCode(t.getStepTypeCodeTarget());
-        next.setTransferCode(t.getCode());
-        next.setStartTime(OffsetDateTime.now());
-        next.setRetryCount(retryCount);
-
-        stepRepo.save(next);
-        log.debug("[Core]: Step [{}][{}] is created", next.getStepTypeCode(), next.getId());
-        return next;
+    private void finishProcess(ProcessState p, Context context) {
+        var result = Optional.ofNullable(context.getResult()).orElse(ProcessResult.SUCCESS);
+        processRepo.finish(p, result);
+        log.info("[Core]: Process [{}][{}] is closed with result [{}]", p.getProcessTypeCode(), p.getId(),result.name());
     }
 }

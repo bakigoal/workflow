@@ -29,7 +29,7 @@ public class WorkflowRetryService {
 
             for (var step : batch) {
                 engine.execute(
-                        new Context().setProcess(step.getProcessInstance()),
+                        step.getProcessInstance().getId(),
                         Signal.RETRY
                 );
             }

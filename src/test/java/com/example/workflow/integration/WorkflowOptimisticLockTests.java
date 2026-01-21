@@ -1,12 +1,12 @@
 
 package com.example.workflow.integration;
 
+import com.example.workflow.config.PostgresTestcontainersConfiguration;
 import com.example.workflow.config.TestStepsConfig;
-import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.WorkflowEngine;
+import com.example.workflow.core.models.ProcessResult;
 import com.example.workflow.entity.ProcessInstance;
-import com.example.workflow.entity.ProcessResult;
 import com.example.workflow.repository.ProcessInstanceRepository;
 import com.example.workflow.repository.StepInstanceRepository;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -26,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import({TestcontainersConfiguration.class, TestStepsConfig.class})
+@Import({PostgresTestcontainersConfiguration.class, TestStepsConfig.class})
 class WorkflowOptimisticLockTests extends BaseWorkflow {
 
     @Autowired
@@ -47,7 +46,7 @@ class WorkflowOptimisticLockTests extends BaseWorkflow {
         processRepo.save(process);
         // 1 - start
         engine.execute(
-                new Context().setProcess(process),
+                process.getId(),
                 Signal.START
         );
 
@@ -56,12 +55,12 @@ class WorkflowOptimisticLockTests extends BaseWorkflow {
         Runnable task = () -> {
             // 2 - resume
             engine.execute(
-                    new Context().setProcess(process),
+                    process.getId(),
                     Signal.NEXT
             );
             // 3 - retry
             engine.execute(
-                    new Context().setProcess(process),
+                    process.getId(),
                     Signal.RETRY
             );
         };
@@ -80,6 +79,6 @@ class WorkflowOptimisticLockTests extends BaseWorkflow {
         var finished = processRepo.findById(process.getId());
         assertTrue(finished.isPresent());
         assertNotNull(finished.get().getEndTime());
-        assertEquals(ProcessResult.SUCCESS, finished.get().getResult());
+        assertEquals(ProcessResult.SUCCESS.name(), finished.get().getResult());
     }
 }

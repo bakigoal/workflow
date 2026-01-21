@@ -1,14 +1,14 @@
 package com.example.workflow;
 
+import com.example.workflow.config.PostgresTestcontainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestcontainersConfiguration.class)
+@Import(PostgresTestcontainersConfiguration.class)
 class WorkflowApplicationTests {
 
     @Test

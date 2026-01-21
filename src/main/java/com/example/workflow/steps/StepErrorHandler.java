@@ -4,7 +4,7 @@ import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.StepHandler;
 import com.example.workflow.core.StepHandlerResult;
-import com.example.workflow.entity.ProcessResult;
+import com.example.workflow.core.models.ProcessResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
