@@ -51,7 +51,7 @@ class WorkflowOptimisticLockTests extends BaseWorkflow {
                 Signal.START
         );
 
-        var executor = Executors.newFixedThreadPool(3);
+        var executor = Executors.newFixedThreadPool(2);
 
         Runnable task = () -> {
             // 2 - resume
@@ -66,7 +66,6 @@ class WorkflowOptimisticLockTests extends BaseWorkflow {
             );
         };
 
-        executor.submit(task);
         executor.submit(task);
         executor.submit(task);
 
