@@ -1,12 +1,12 @@
 
 package com.example.workflow.integration;
 
+import com.example.workflow.config.TestStepsConfig;
 import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.WorkflowEngine;
 import com.example.workflow.entity.ProcessInstance;
 import com.example.workflow.repository.ProcessInstanceRepository;
-import com.example.workflow.config.TestStepsConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,23 +40,6 @@ class WorkflowOptimisticLockTests {
         process.setStartTime(OffsetDateTime.now());
 
         processRepo.save(process);
-
-        var executor = Executors.newFixedThreadPool(2);
-
-        Runnable task = () ->
-                engineExecutions(process);
-
-        executor.submit(task);
-        executor.submit(task);
-
-        executor.shutdown();
-        executor.awaitTermination(5, TimeUnit.SECONDS);
-
-        var updated = processRepo.findById(process.getId()).orElseThrow();
-        assertThat(updated.getEndTime()).isNotNull();
-    }
-
-    private void engineExecutions(ProcessInstance process) {
         // 1 - start
         engine.execute(
                 new Context().setProcess(process),
@@ -67,10 +50,24 @@ class WorkflowOptimisticLockTests {
                 new Context().setProcess(process),
                 Signal.NEXT
         );
-        // 3 - retry
-        engine.execute(
-                new Context().setProcess(process),
-                Signal.RETRY
-        );
+
+        var executor = Executors.newFixedThreadPool(2);
+
+        Runnable task = () -> {
+            // 3 - retry
+            engine.execute(
+                    new Context().setProcess(process),
+                    Signal.RETRY
+            );
+        };
+
+        executor.submit(task);
+        executor.submit(task);
+
+        executor.shutdown();
+        executor.awaitTermination(5, TimeUnit.SECONDS);
+
+        var updated = processRepo.findById(process.getId()).orElseThrow();
+        assertThat(updated.getEndTime()).isNotNull();
     }
 }
