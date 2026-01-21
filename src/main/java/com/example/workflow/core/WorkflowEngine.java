@@ -5,6 +5,8 @@ import com.example.workflow.entity.ProcessInstance;
 import com.example.workflow.entity.ProcessResult;
 import com.example.workflow.entity.StepInstance;
 import com.example.workflow.entity.Transfer;
+import com.example.workflow.exceptions.ApiError;
+import com.example.workflow.exceptions.GeneralExceptionContainer;
 import com.example.workflow.repository.ProcessInstanceRepository;
 import com.example.workflow.repository.StepInstanceRepository;
 import com.example.workflow.repository.TransferRepository;
@@ -49,11 +51,13 @@ public class WorkflowEngine {
             Transfer t;
             StepInstance currentStep;
             if (activeStepOpt.isEmpty()) {
-                t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name()).orElseThrow();
+                t = transferRepo.findStartTransition(p.getProcessTypeCode(), signal.name())
+                        .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
                 currentStep = createStep(p, t, 0);
             } else {
                 var activeStep = activeStepOpt.get();
-                t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name()).orElseThrow();
+                t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name())
+                        .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
                 closeStep(activeStep);
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
