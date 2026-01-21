@@ -1,4 +1,4 @@
-package com.example.workflow.steps;
+package com.example.workflow.config;
 
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.StepHandler;

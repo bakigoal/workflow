@@ -6,7 +6,7 @@ import com.example.workflow.core.Signal;
 import com.example.workflow.core.WorkflowEngine;
 import com.example.workflow.entity.ProcessInstance;
 import com.example.workflow.repository.ProcessInstanceRepository;
-import com.example.workflow.steps.TestStepsConfig;
+import com.example.workflow.config.TestStepsConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
