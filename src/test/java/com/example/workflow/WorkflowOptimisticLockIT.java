@@ -6,8 +6,13 @@ import com.example.workflow.core.Signal;
 import com.example.workflow.core.WorkflowEngine;
 import com.example.workflow.entity.ProcessInstance;
 import com.example.workflow.repository.ProcessInstanceRepository;
+import com.example.workflow.steps.TestStepsConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -16,7 +21,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class WorkflowOptimisticLockIT extends AbstractIntegrationTest {
+@SpringBootTest
+@ActiveProfiles("test")
+@Import({TestcontainersConfiguration.class, TestStepsConfig.class})
+class WorkflowOptimisticLockIT {
 
     @Autowired
     WorkflowEngine engine;
