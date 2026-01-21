@@ -1,0 +1,23 @@
+logging:
+  level:
+    com.example.workflow: INFO
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workflow
+    username: admin
+    password: secret
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+engine:
+  retry:
+    max_retry_count: 3
+    retry_after_seconds: 20
+    retry_batch_size: 100
+    claim_ttl_minutes: 10

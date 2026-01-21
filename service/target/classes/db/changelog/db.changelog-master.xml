@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="001-init-schema" author="system">
+        <sqlFile path="db/changelog/001-init-schema.sql"/>
+    </changeSet>
+
+    <changeSet id="002-add-simple-transfers" author="system">
+        <sqlFile path="db/changelog/002-add-simple-transfers.sql"/>
+    </changeSet>
+
+    <changeSet id="003-add-step-instance-version" author="system">
+        <sqlFile path="db/changelog/003-add-step-instance-version.sql"/>
+    </changeSet>
+
+    <changeSet id="004-add-retries" author="system">
+        <sqlFile path="db/changelog/004-add-retries.sql"/>
+    </changeSet>
+
+    <changeSet id="005-add-result" author="system">
+        <sqlFile path="db/changelog/005-add-result.sql"/>
+    </changeSet>
+
+</databaseChangeLog>

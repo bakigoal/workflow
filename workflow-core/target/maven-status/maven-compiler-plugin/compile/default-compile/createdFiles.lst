@@ -1,0 +1,12 @@
+com/example/workflow/core/WorkflowEngine.class
+com/example/workflow/core/models/ProcessState.class
+com/example/workflow/core/ports/StepStateRepository.class
+com/example/workflow/core/ports/TransferStateRepository.class
+com/example/workflow/core/Context.class
+com/example/workflow/core/ports/ProcessStateRepository.class
+com/example/workflow/core/StepHandler.class
+com/example/workflow/core/models/StepState.class
+com/example/workflow/core/models/ProcessResult.class
+com/example/workflow/core/Signal.class
+com/example/workflow/core/models/TransferState.class
+com/example/workflow/core/StepHandlerResult.class

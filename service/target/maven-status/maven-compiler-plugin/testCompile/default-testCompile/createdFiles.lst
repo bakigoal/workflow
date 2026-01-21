@@ -1,0 +1,8 @@
+com/example/workflow/WorkflowApplicationTests.class
+com/example/workflow/service/WorkflowDiagramGeneratorTest.class
+com/example/workflow/integration/BaseWorkflow.class
+com/example/workflow/config/TestStepsConfig.class
+com/example/workflow/ServiceApplicationTests.class
+com/example/workflow/config/PostgresTestcontainersConfiguration.class
+com/example/workflow/integration/WorkflowOptimisticLockTests.class
+com/example/workflow/integration/WorkflowEngineTests.class

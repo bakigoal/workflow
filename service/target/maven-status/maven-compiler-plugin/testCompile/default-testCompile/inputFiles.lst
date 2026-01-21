@@ -1,0 +1,8 @@
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/ServiceApplicationTests.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/WorkflowApplicationTests.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/config/PostgresTestcontainersConfiguration.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/config/TestStepsConfig.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/integration/BaseWorkflow.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/integration/WorkflowEngineTests.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/integration/WorkflowOptimisticLockTests.java
+/Users/bakigoal/Documents/workflow/service/src/test/java/com/example/workflow/service/WorkflowDiagramGeneratorTest.java
