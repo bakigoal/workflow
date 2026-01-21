@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @ActiveProfiles("test")
 @Import({TestcontainersConfiguration.class, TestStepsConfig.class})
-class WorkflowOptimisticLockIT {
+class WorkflowOptimisticLockTests {
 
     @Autowired
     WorkflowEngine engine;

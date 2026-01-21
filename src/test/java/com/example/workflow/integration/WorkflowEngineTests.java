@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @Import({TestcontainersConfiguration.class, TestStepsConfig.class})
-class WorkflowEngineIT {
+class WorkflowEngineTests {
 
     @Autowired
     WorkflowEngine workflowEngine;
