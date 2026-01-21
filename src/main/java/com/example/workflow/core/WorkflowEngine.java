@@ -59,7 +59,6 @@ public class WorkflowEngine {
                 t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name())
                         .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
                 closeStep(activeStep);
-                log.debug("[Core]: Step [{}][{}] is closed", activeStep.getStepTypeCode(), activeStep.getId());
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
             }
@@ -104,6 +103,7 @@ public class WorkflowEngine {
     private void closeStep(StepInstance oldStep) {
         oldStep.setEndTime(OffsetDateTime.now());
         stepRepo.saveAndFlush(oldStep);
+        log.debug("[Core]: Step [{}][{}] is closed", oldStep.getStepTypeCode(), oldStep.getId());
     }
 
     private boolean scheduleRetry(StepInstance currentStep) {
@@ -122,6 +122,7 @@ public class WorkflowEngine {
         p.setEndTime(OffsetDateTime.now());
         p.setResult(Optional.ofNullable(context.getResult()).orElse(ProcessResult.SUCCESS));
         processRepo.save(p);
+        log.info("[Core]: Process [{}][{}] is closed with result [{}]", p.getProcessTypeCode(), p.getId(), p.getResult().name());
     }
 
     private StepInstance createStep(ProcessInstance p, Transfer t, int retryCount) {
