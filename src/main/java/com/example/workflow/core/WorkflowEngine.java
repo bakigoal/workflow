@@ -74,7 +74,7 @@ public class WorkflowEngine {
             var stepHandler = registry.get(currentStep.getStepTypeCode());
             var nextSignal = stepHandler.handle(context);
 
-            log.debug("signal: {} step: {}", nextSignal, currentStep.getStepTypeCode());
+            log.debug("step: [{}] -> signal: [{}]", currentStep.getStepTypeCode(), nextSignal);
 
             // pause
             if (nextSignal == null) {
