@@ -1,8 +1,8 @@
 package com.example.workflow.steps;
 
 import com.example.workflow.core.Context;
-import com.example.workflow.core.Signal;
 import com.example.workflow.core.StepHandler;
+import com.example.workflow.core.StepHandlerResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 public class StepAHandler implements StepHandler {
 
     @Override
-    public Signal handle(Context context) {
-        log.info("[STEP_A] Handling: {}", context);
-        return null;
+    public StepHandlerResult handle(Context context) {
+        return pause();
     }
 }

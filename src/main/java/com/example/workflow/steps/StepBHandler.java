@@ -3,6 +3,7 @@ package com.example.workflow.steps;
 import com.example.workflow.core.Context;
 import com.example.workflow.core.Signal;
 import com.example.workflow.core.StepHandler;
+import com.example.workflow.core.StepHandlerResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -11,12 +12,11 @@ import org.springframework.stereotype.Component;
 public class StepBHandler implements StepHandler {
 
     @Override
-    public Signal handle(Context context) {
-        log.info("[STEP_B] Handling: {}", context);
+    public StepHandlerResult handle(Context context) {
         if (context.getCurrentStep().getRetryCount() < 1) {
-            return Signal.RETRY;
+            return signal(Signal.RETRY);
         }
 
-        return Signal.FINISH;
+        return signal(Signal.FINISH);
     }
 }

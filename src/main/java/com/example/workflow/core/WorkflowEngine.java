@@ -59,6 +59,7 @@ public class WorkflowEngine {
                 t = transferRepo.findStepTransition(p.getProcessTypeCode(), activeStep.getStepTypeCode(), signal.name())
                         .orElseThrow(() -> new GeneralExceptionContainer(ApiError.ERROR_TRANSFER_NOT_FOUND));
                 closeStep(activeStep);
+                log.debug("[Core]: Step [{}][{}] is closed", activeStep.getStepTypeCode(), activeStep.getId());
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
             }
@@ -72,20 +73,23 @@ public class WorkflowEngine {
             }
 
             var stepHandler = registry.get(currentStep.getStepTypeCode());
-            var nextSignal = stepHandler.handle(context);
-
-            log.debug("step: [{}] -> signal: [{}]", currentStep.getStepTypeCode(), nextSignal);
+            log.debug("[Core]: StepHandler [{}] is started", currentStep.getStepTypeCode());
+            var result = stepHandler.handle(context);
+            log.debug("[Core]: StepHandler [{}] is finished", currentStep.getStepTypeCode());
 
             // pause
-            if (nextSignal == null) {
-                log.info("[Core]: Step {} paused", currentStep.getStepTypeCode());
+            if (result.isPaused()) {
+                log.info("[Core]: Step [{}] paused", currentStep.getStepTypeCode());
                 return; // PAUSE
             }
+
+            var nextSignal = result.getSignal();
+            log.debug("step: [{}] -> signal: [{}]", currentStep.getStepTypeCode(), nextSignal);
 
             // retry
             if (nextSignal == Signal.RETRY) {
                 if (scheduleRetry(currentStep)) {
-                    log.info("[Core]: Step {} scheduled for retry", currentStep.getStepTypeCode());
+                    log.info("[Core]: Step [{}] scheduled for retry", currentStep.getStepTypeCode());
                     return; // PAUSE
                 }
 
@@ -130,6 +134,7 @@ public class WorkflowEngine {
         next.setRetryCount(retryCount);
 
         stepRepo.save(next);
+        log.debug("[Core]: Step [{}][{}] is created", next.getStepTypeCode(), next.getId());
         return next;
     }
 }
