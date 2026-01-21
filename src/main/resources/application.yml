@@ -1,3 +1,6 @@
+logging:
+  level:
+    com.example.workflow: INFO
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/workflow
