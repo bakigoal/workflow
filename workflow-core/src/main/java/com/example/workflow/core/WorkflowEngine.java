@@ -1,5 +1,8 @@
 package com.example.workflow.core;
 
+import com.example.workflow.core.exceptions.ProcessNotFoundException;
+import com.example.workflow.core.exceptions.TransferNotFoundException;
+import com.example.workflow.core.exceptions.WorkflowException;
 import com.example.workflow.core.models.ProcessResult;
 import com.example.workflow.core.models.ProcessState;
 import com.example.workflow.core.models.StepState;
@@ -26,12 +29,15 @@ public class WorkflowEngine {
     public void execute(UUID processId, Signal signal) {
         try {
             log.info("[Core]: Start managing process: {}", processId);
-            var process = processRepo.findById(processId).orElseThrow();
+            var process = processRepo.findById(processId).orElseThrow(() -> new ProcessNotFoundException("NO Process with processId = " + processId));
             manageProcess(process, signal);
             log.info("[Core]: Finish managing process: {}", processId);
         } catch (Exception e) {
             log.error("[Core]: Error managing process {}: {}", processId, e.getMessage(), e);
-            throw e;
+            if (e instanceof WorkflowException) {
+                throw e;
+            }
+            throw new WorkflowException(e.getMessage());
         }
     }
 
@@ -45,11 +51,12 @@ public class WorkflowEngine {
             StepState currentStep;
             if (activeStepOpt.isEmpty()) {
                 t = transferRepo.findStart(p.getProcessTypeCode(), signal)
-                        .orElseThrow();
+                        .orElseThrow(() -> new TransferNotFoundException("Start transfer is not found for process type = " + p.getProcessTypeCode()));
                 currentStep = createStep(p, t, 0);
             } else {
                 var activeStep = activeStepOpt.get();
-                t = transferRepo.findNext(p.getProcessTypeCode(), signal, activeStep.getStepTypeCode()).orElseThrow();
+                t = transferRepo.findNext(p.getProcessTypeCode(), signal, activeStep.getStepTypeCode())
+                        .orElseThrow(() -> new TransferNotFoundException("Next transfer is not found for process type = " + p.getProcessTypeCode()));
                 closeStep(activeStep);
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;
@@ -113,6 +120,6 @@ public class WorkflowEngine {
     private void finishProcess(ProcessState p, Context context) {
         var result = Optional.ofNullable(context.getResult()).orElse(ProcessResult.SUCCESS);
         processRepo.finish(p, result);
-        log.info("[Core]: Process [{}][{}] is closed with result [{}]", p.getProcessTypeCode(), p.getId(),result.name());
+        log.info("[Core]: Process [{}][{}] is closed with result [{}]", p.getProcessTypeCode(), p.getId(), result.name());
     }
 }
