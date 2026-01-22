@@ -27,8 +27,8 @@ public class TransferStateRepositoryAdapter implements TransferStateRepository {
     }
 
     @Override
-    public Optional<TransferState> findNext(String processTypeCode, Signal signal, StepState step) {
-        return transferRepository.findStepTransition(processTypeCode, step.getStepTypeCode(), signal.name())
+    public Optional<TransferState> findNext(String processTypeCode, Signal signal, String stepTypeCode) {
+        return transferRepository.findStepTransition(processTypeCode, stepTypeCode, signal.name())
                 .map(transferStateMapper::toState);
     }
 }

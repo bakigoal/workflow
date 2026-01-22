@@ -49,7 +49,7 @@ public class WorkflowEngine {
                 currentStep = createStep(p, t, 0);
             } else {
                 var activeStep = activeStepOpt.get();
-                t = transferRepo.findNext(p.getProcessTypeCode(), signal, activeStep).orElseThrow();
+                t = transferRepo.findNext(p.getProcessTypeCode(), signal, activeStep.getStepTypeCode()).orElseThrow();
                 closeStep(activeStep);
                 activeStep = createStep(p, t, signal == Signal.RETRY ? activeStep.getRetryCount() : 0);
                 currentStep = activeStep;

@@ -10,5 +10,5 @@ public interface TransferStateRepository {
 
     Optional<TransferState> findStart(String processTypeCode, Signal signal);
 
-    Optional<TransferState> findNext(String processTypeCode, Signal signal, StepState stepTypeCode);
+    Optional<TransferState> findNext(String processTypeCode, Signal signal, String stepTypeCode);
 }
